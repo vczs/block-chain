@@ -11,29 +11,14 @@ import (
 	"time"
 )
 
-// CreationBlock 生成创世区块
-func CreationBlock() *model.Block {
-	block := model.Block{
-		Height:    0,
-		BMP:       0,
-		Nonce:     0,
-		PreHash:   "Creation block",
-		TimeStamp: time.Now().Unix(),
-		Difficult: common.Difficult,
-		Data:      "创世区块",
-	}
-	block.Hash = utils.CalculateHash(&block) // 计算区块hash
-	return &block
-}
-
-// CreateBlock 生成区块
-func CreateBlock(bmp, data string) (int, *model.Block) {
+// CreateNewBlock 生成区块
+func CreateNewBlock(bmp, data string) (int, string, *model.Block) {
 	int_bmp := 0
 	if bmp != "" {
 		b, err := strconv.Atoi(bmp)
 		if err != nil {
-			log.Println("Next Get err:", err)
-			return common.PARAMETER_ERROR, nil
+			utils.VczsLog("Next Get err:", err)
+			return common.PARAMETER_ERROR, "", nil
 		}
 		int_bmp = b
 	}
@@ -62,5 +47,5 @@ func CreateBlock(bmp, data string) (int, *model.Block) {
 	use_time := time.Since(start) // 计算挖矿耗时
 	log.Println("耗时:", use_time)
 	fmt.Println()
-	return common.SUCCESS, &next_block
+	return common.SUCCESS, "", &next_block
 }

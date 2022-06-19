@@ -9,30 +9,35 @@ import (
 )
 
 type Handler struct {
-	handlerMap map[string]func(*common.Context) (int, interface{}) // 路由对应处理器函数
+	handlerMap map[string]func(*common.Context) (int, string, interface{}) // 路由对应处理器函数
 }
 
 func (handler *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.Proto, r.Host, r.URL.Path) // 打印接口调用日志
+	// 打印api调用日志
+	log.Println(r.Method, r.Proto, r.Host, r.URL.Path)
 	if router, ok := handler.handlerMap[r.URL.Path]; ok {
-		code, result := router(&common.Context{W: w, R: r}) // 调用路由并传入Context
+		// 调用路由并传入Context
+		code, message, result := router(&common.Context{W: w, R: r})
+		// 如果处理器返回code码为404 就返回404页面
 		if code == common.NOT_FOUND {
-			// 如果处理器返回code码为404 就返回404页面
 			notFound(w)
 			return
 		}
-		message := common.GetMessage(code) // 获取message
+		// 如果message为空就获取定义好的message
+		if message == "" {
+			message = common.GetMessage(code)
+		}
 		res, err := json.Marshal(model.Result{Code: code, Message: message, Result: result})
 		if err != nil {
 			w.WriteHeader(500)
-			w.Write([]byte("服务器异常:" + err.Error()))
+			w.Write([]byte("服务器数据序列化异常:" + err.Error()))
 		} else {
-
-			w.Header().Set("content-type", "text/json") // 编码格式设置为json类型
-			w.Write(res)                                // 返回结果
+			// 编码格式设置为json类型
+			w.Header().Set("content-type", "text/json")
+			w.Write(res)
 		}
 	} else {
-		notFound(w) // 404页面
+		notFound(w)
 	}
 }
 
